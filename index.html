@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DinePulse — Bangalore Sentiment Dashboard</title>
+  <meta name="description" content="Real-time sentiment intelligence for 6,926 Bangalore restaurants. Powered by 226,188 Zomato reviews and NLP." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red:       #e23744;
+      --red-light: #ff6b7a;
+      --red-pale:  #fff0f1;
+      --dark:      #111827;
+      --gray-700:  #374151;
+      --gray-500:  #6b7280;
+      --gray-300:  #d1d5db;
+      --gray-100:  #f3f4f6;
+      --white:     #ffffff;
+      --radius-lg: 20px;
+      --radius-md: 12px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
+      --shadow-lg: 0 12px 48px rgba(0,0,0,0.12);
+      --shadow-red: 0 8px 32px rgba(226,55,68,0.25);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--white);
+      color: var(--dark);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ─────────────────────────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 48px;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+      transition: box-shadow 0.3s;
+    }
+    nav.scrolled { box-shadow: var(--shadow-md); }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800; font-size: 1.3rem; color: var(--dark);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--red); }
+    .nav-logo .icon { font-size: 1.5rem; }
+    .nav-links { display: flex; gap: 32px; list-style: none; }
+    .nav-links a {
+      text-decoration: none; color: var(--gray-700);
+      font-size: 0.9rem; font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--red); }
+    .nav-cta {
+      background: var(--red); color: #fff;
+      padding: 10px 24px; border-radius: 50px;
+      font-weight: 600; font-size: 0.9rem;
+      text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: var(--shadow-red);
+    }
+    .nav-cta:hover { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(226,55,68,0.35); }
+
+    /* ── HERO ────────────────────────────────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(226,55,68,0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 90% 80%, rgba(226,55,68,0.05) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 10% 90%, rgba(255,107,122,0.04) 0%, transparent 60%);
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--red-pale); color: var(--red);
+      border: 1px solid rgba(226,55,68,0.2);
+      padding: 8px 20px; border-radius: 50px;
+      font-size: 0.82rem; font-weight: 600;
+      margin-bottom: 32px; position: relative; z-index: 1;
+      animation: fadeDown 0.6s ease both;
+    }
+    .hero-badge::before {
+      content: ''; width: 7px; height: 7px;
+      background: var(--red); border-radius: 50%;
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.4); }
+    }
+
+    .hero h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(2.8rem, 6vw, 5.5rem);
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      position: relative; z-index: 1;
+      animation: fadeUp 0.7s ease 0.1s both;
+    }
+    .hero h1 .line1 { display: block; color: var(--dark); }
+    .hero h1 .brand {
+      display: block;
+      background: linear-gradient(135deg, var(--red) 0%, #ff6b7a 50%, #ff9a56 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .tagline-wrap {
+      margin-top: 16px;
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      color: var(--gray-500);
+      font-weight: 400;
+      position: relative; z-index: 1;
+      animation: fadeUp 0.7s ease 0.25s both;
+      height: 2em; display: flex; align-items: center; justify-content: center;
+    }
+    .tagline-static { margin-right: 8px; }
+    .tagline-dynamic {
+      color: var(--red);
+      font-weight: 600;
+      border-right: 2px solid var(--red);
+      padding-right: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      animation: blink 0.75s step-end infinite;
+    }
+    @keyframes blink { 50% { border-color: transparent; } }
+
+    .hero-actions {
+      display: flex; gap: 16px; margin-top: 48px;
+      position: relative; z-index: 1;
+      animation: fadeUp 0.7s ease 0.4s both;
+    }
+    .btn-primary {
+      background: var(--red); color: #fff;
+      padding: 16px 36px; border-radius: 50px;
+      font-weight: 700; font-size: 1rem;
+      text-decoration: none;
+      box-shadow: var(--shadow-red);
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: inline-flex; align-items: center; gap: 10px;
+    }
+    .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 16px 40px rgba(226,55,68,0.4); }
+    .btn-secondary {
+      background: var(--white); color: var(--dark);
+      padding: 16px 36px; border-radius: 50px;
+      font-weight: 600; font-size: 1rem;
+      text-decoration: none;
+      border: 2px solid var(--gray-300);
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+      display: inline-flex; align-items: center; gap: 10px;
+    }
+    .btn-secondary:hover { transform: translateY(-3px); border-color: var(--red); box-shadow: var(--shadow-md); }
+
+    /* ── STATS ───────────────────────────────────────────────────── */
+    .stats-band {
+      background: var(--dark);
+      padding: 56px 48px;
+      display: flex; justify-content: center; flex-wrap: wrap; gap: 0;
+    }
+    .stat-item {
+      flex: 1; min-width: 180px; max-width: 260px;
+      text-align: center; padding: 24px 32px;
+      border-right: 1px solid rgba(255,255,255,0.08);
+      position: relative;
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .stat-item:last-child { border-right: none; }
+    .stat-item.visible { opacity: 1; transform: translateY(0); }
+    .stat-number {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.8rem; font-weight: 800;
+      background: linear-gradient(135deg, #fff 0%, var(--red-light) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+    .stat-label { color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-top: 8px; font-weight: 500; }
+
+    /* ── SCREENSHOT SHOWCASE ─────────────────────────────────────── */
+    .showcase {
+      padding: 100px 48px;
+      background: var(--gray-100);
+    }
+    .section-label {
+      display: inline-block;
+      color: var(--red); font-weight: 700; font-size: 0.8rem;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--dark);
+      margin-bottom: 12px;
+    }
+    .section-sub { color: var(--gray-500); font-size: 1.05rem; max-width: 520px; margin-bottom: 56px; }
+
+    .tabs {
+      display: flex; gap: 8px; margin-bottom: 32px; flex-wrap: wrap;
+    }
+    .tab-btn {
+      padding: 10px 22px; border-radius: 50px;
+      border: 2px solid var(--gray-300);
+      background: var(--white); color: var(--gray-700);
+      font-weight: 600; font-size: 0.88rem;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .tab-btn:hover { border-color: var(--red); color: var(--red); }
+    .tab-btn.active { background: var(--red); color: #fff; border-color: var(--red); }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; animation: fadeIn 0.35s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .screenshot-frame {
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--gray-300);
+      position: relative;
+    }
+    .screenshot-bar {
+      background: #e8e8e8;
+      padding: 12px 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot-red { background: #ff5f57; }
+    .dot-yellow { background: #ffbd2e; }
+    .dot-green { background: #28c840; }
+    .url-bar {
+      flex: 1; background: var(--white); border-radius: 6px;
+      padding: 5px 14px; font-size: 0.78rem; color: var(--gray-500);
+      margin: 0 16px;
+    }
+    .screenshot-frame img { width: 100%; display: block; }
+
+    /* ── FEATURES ────────────────────────────────────────────────── */
+    .features { padding: 100px 48px; }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px; margin-top: 56px;
+    }
+    .feature-card {
+      background: var(--white);
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+    }
+    .feature-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-lg);
+      border-color: rgba(226,55,68,0.3);
+    }
+    .feature-icon {
+      width: 52px; height: 52px;
+      background: var(--red-pale);
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; margin-bottom: 20px;
+    }
+    .feature-card h3 { font-weight: 700; font-size: 1.05rem; margin-bottom: 10px; color: var(--dark); }
+    .feature-card p { color: var(--gray-500); font-size: 0.9rem; line-height: 1.65; }
+
+    /* ── TECH STACK ──────────────────────────────────────────────── */
+    .tech { padding: 80px 48px; background: var(--gray-100); }
+    .tech-pills {
+      display: flex; flex-wrap: wrap; gap: 12px; margin-top: 40px;
+    }
+    .tech-pill {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--white); border: 1px solid var(--gray-300);
+      border-radius: 50px; padding: 12px 24px;
+      font-weight: 600; font-size: 0.9rem;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    }
+    .tech-pill:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--red); }
+    .tech-pill .emoji { font-size: 1.2rem; }
+
+    /* ── CTA ─────────────────────────────────────────────────────── */
+    .cta-section {
+      padding: 100px 48px; text-align: center;
+      background: linear-gradient(135deg, var(--dark) 0%, #1f1135 100%);
+      position: relative; overflow: hidden;
+    }
+    .cta-glow {
+      position: absolute; width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(226,55,68,0.15) 0%, transparent 70%);
+      top: 50%; left: 50%; transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    .cta-section h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      font-weight: 800; color: var(--white);
+      letter-spacing: -0.02em; margin-bottom: 16px;
+      position: relative; z-index: 1;
+    }
+    .cta-section p { color: rgba(255,255,255,0.55); font-size: 1.05rem; margin-bottom: 40px; position: relative; z-index: 1; }
+    .cta-btns { display: flex; justify-content: center; gap: 16px; position: relative; z-index: 1; flex-wrap: wrap; }
+    .btn-white {
+      background: var(--white); color: var(--dark);
+      padding: 16px 36px; border-radius: 50px;
+      font-weight: 700; font-size: 1rem;
+      text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: inline-flex; align-items: center; gap: 10px;
+    }
+    .btn-white:hover { transform: translateY(-3px); box-shadow: 0 16px 40px rgba(0,0,0,0.3); }
+    .btn-outline-white {
+      background: transparent; color: var(--white);
+      padding: 16px 36px; border-radius: 50px;
+      font-weight: 600; font-size: 1rem;
+      text-decoration: none;
+      border: 2px solid rgba(255,255,255,0.3);
+      transition: border-color 0.2s, transform 0.2s;
+      display: inline-flex; align-items: center; gap: 10px;
+    }
+    .btn-outline-white:hover { border-color: var(--white); transform: translateY(-3px); }
+
+    /* ── FOOTER ──────────────────────────────────────────────────── */
+    footer {
+      background: var(--dark); padding: 32px 48px;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 16px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .footer-logo { font-family: 'Outfit', sans-serif; font-weight: 800; color: var(--white); font-size: 1.1rem; }
+    .footer-logo span { color: var(--red); }
+    footer p { color: rgba(255,255,255,0.35); font-size: 0.85rem; }
+    .footer-link { color: var(--red); text-decoration: none; font-weight: 600; }
+    .footer-link:hover { text-decoration: underline; }
+
+    /* ── ANIMATIONS ──────────────────────────────────────────────── */
+    @keyframes fadeDown { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeUp   { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    .reveal {
+      opacity: 0; transform: translateY(30px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── RESPONSIVE ──────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      nav { padding: 14px 20px; }
+      .nav-links { display: none; }
+      .hero { padding: 100px 20px 60px; }
+      .hero-actions { flex-direction: column; align-items: center; }
+      .stats-band { padding: 40px 20px; }
+      .stat-item { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.08); }
+      .showcase, .features, .tech, .cta-section { padding: 60px 20px; }
+      footer { flex-direction: column; text-align: center; padding: 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="navbar">
+  <a href="#" class="nav-logo"><span class="icon">🍽️</span> Dine<span>Pulse</span></a>
+  <ul class="nav-links">
+    <li><a href="#showcase">Dashboard</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#tech">Tech Stack</a></li>
+  </ul>
+  <a href="https://github.com/shirodkaraditya2003/DinePulse-Bangalore-Sentiment-Dashboard" target="_blank" class="nav-cta">⭐ View on GitHub</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-bg"></div>
+
+  <div class="hero-badge">🔴 Live NLP Sentiment Engine</div>
+
+  <h1>
+    <span class="line1">Know What Bangalore</span>
+    <span class="brand">Diners Really Think</span>
+  </h1>
+
+  <div class="tagline-wrap">
+    <span class="tagline-static">Powered by</span>
+    <span class="tagline-dynamic" id="tagline"></span>
+  </div>
+
+  <div class="hero-actions">
+    <a href="http://localhost:8501" target="_blank" class="btn-primary">
+      🚀 Launch Dashboard
+    </a>
+    <a href="https://github.com/shirodkaraditya2003/DinePulse-Bangalore-Sentiment-Dashboard" target="_blank" class="btn-secondary">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      GitHub Repo
+    </a>
+  </div>
+</section>
+
+<!-- STATS BAND -->
+<div class="stats-band">
+  <div class="stat-item" data-count="226188" data-suffix="">
+    <div class="stat-number" id="s1">0</div>
+    <div class="stat-label">📝 Reviews Analyzed</div>
+  </div>
+  <div class="stat-item" data-count="6926" data-suffix="">
+    <div class="stat-number" id="s2">0</div>
+    <div class="stat-label">🏪 Restaurants</div>
+  </div>
+  <div class="stat-item" data-count="90" data-suffix="">
+    <div class="stat-number" id="s3">0</div>
+    <div class="stat-label">📍 Locations</div>
+  </div>
+  <div class="stat-item" data-count="75" data-suffix=".8%">
+    <div class="stat-number" id="s4">0</div>
+    <div class="stat-label">✅ Positive Sentiment</div>
+  </div>
+</div>
+
+<!-- SCREENSHOT SHOWCASE -->
+<section class="showcase" id="showcase">
+  <div class="reveal">
+    <div class="section-label">Dashboard Preview</div>
+    <h2 class="section-title">Six Powerful Views<br>One Smart Dashboard</h2>
+    <p class="section-sub">Navigate through live charts, maps, word clouds and leaderboards — all in a sleek dark UI.</p>
+  </div>
+
+  <div class="tabs reveal">
+    <button class="tab-btn active" onclick="switchTab(0)">🏠 Overview</button>
+    <button class="tab-btn" onclick="switchTab(1)">📊 Deep Dive</button>
+    <button class="tab-btn" onclick="switchTab(2)">📍 Locations</button>
+    <button class="tab-btn" onclick="switchTab(3)">🗺️ Map</button>
+  </div>
+
+  <div class="tab-panel active reveal">
+    <div class="screenshot-frame">
+      <div class="screenshot-bar">
+        <div class="dot dot-red"></div><div class="dot dot-yellow"></div><div class="dot dot-green"></div>
+        <div class="url-bar">localhost:8501 — Overview</div>
+      </div>
+      <img src="assets/Screenshot 2026-06-09 204626.png" alt="DinePulse Overview Dashboard" />
+    </div>
+  </div>
+
+  <div class="tab-panel reveal">
+    <div class="screenshot-frame">
+      <div class="screenshot-bar">
+        <div class="dot dot-red"></div><div class="dot dot-yellow"></div><div class="dot dot-green"></div>
+        <div class="url-bar">localhost:8501 — Restaurant Deep Dive</div>
+      </div>
+      <img src="assets/Screenshot 2026-06-09 204746.png" alt="Restaurant Deep Dive with Word Clouds" />
+    </div>
+  </div>
+
+  <div class="tab-panel reveal">
+    <div class="screenshot-frame">
+      <div class="screenshot-bar">
+        <div class="dot dot-red"></div><div class="dot dot-yellow"></div><div class="dot dot-green"></div>
+        <div class="url-bar">localhost:8501 — Location Analysis</div>
+      </div>
+      <img src="assets/Screenshot 2026-06-09 204845.png" alt="Location Analysis" />
+    </div>
+  </div>
+
+  <div class="tab-panel reveal">
+    <div class="screenshot-frame">
+      <div class="screenshot-bar">
+        <div class="dot dot-red"></div><div class="dot dot-yellow"></div><div class="dot dot-green"></div>
+        <div class="url-bar">localhost:8501 — Map Explorer</div>
+      </div>
+      <img src="assets/Screenshot 2026-06-09 204904.png" alt="3D Map Explorer" />
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="reveal">
+    <div class="section-label">What's Inside</div>
+    <h2 class="section-title">Everything You Need to<br>Understand Dining Sentiment</h2>
+    <p class="section-sub">Built with real data, real NLP, and real insights — not mock numbers.</p>
+  </div>
+
+  <div class="features-grid">
+    <div class="feature-card reveal">
+      <div class="feature-icon">🧠</div>
+      <h3>VADER Sentiment NLP</h3>
+      <p>Every review is scored with NLTK's VADER — a lexicon-based model tuned for social text, giving positive, neutral, and negative classifications with a confidence score.</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon">🗺️</div>
+      <h3>Interactive 3D Map</h3>
+      <p>Pydeck-powered 3D column map of all Bangalore restaurant locations, colour-coded by sentiment health. Hover any pin to see review stats instantly.</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon">☁️</div>
+      <h3>Positive & Negative Word Clouds</h3>
+      <p>Visual summaries of what customers love (green) and complain about (red) — per restaurant, dynamically generated from actual review text.</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon">🔍</div>
+      <h3>Live Review Analyzer</h3>
+      <p>Paste any review text and get an instant sentiment result with a visual gauge, score, and confidence percentage — powered by the same NLP engine.</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon">🏆</div>
+      <h3>Restaurant Health Leaderboard</h3>
+      <p>Composite health scores ranking all 6,926 restaurants by sentiment quality — with filters by area, minimum reviews, and CSV export.</p>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon">📍</div>
+      <h3>90-Location Analysis</h3>
+      <p>Discover which Bangalore neighbourhoods have the happiest diners — ranked charts with a review volume vs. sentiment quality scatter plot.</p>
+    </div>
+  </div>
+</section>
+
+<!-- TECH STACK -->
+<section class="tech" id="tech">
+  <div class="reveal">
+    <div class="section-label">Built With</div>
+    <h2 class="section-title">Tech Stack</h2>
+  </div>
+  <div class="tech-pills">
+    <div class="tech-pill reveal"><span class="emoji">🐍</span> Python</div>
+    <div class="tech-pill reveal"><span class="emoji">🚀</span> Streamlit</div>
+    <div class="tech-pill reveal"><span class="emoji">🧠</span> NLTK VADER</div>
+    <div class="tech-pill reveal"><span class="emoji">📊</span> Plotly</div>
+    <div class="tech-pill reveal"><span class="emoji">🗺️</span> Pydeck</div>
+    <div class="tech-pill reveal"><span class="emoji">☁️</span> WordCloud</div>
+    <div class="tech-pill reveal"><span class="emoji">🐼</span> Pandas</div>
+    <div class="tech-pill reveal"><span class="emoji">🔢</span> NumPy</div>
+    <div class="tech-pill reveal"><span class="emoji">📉</span> Scikit-learn</div>
+    <div class="tech-pill reveal"><span class="emoji">🐱</span> GitHub</div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-glow"></div>
+  <h2>Ready to Explore Bangalore's<br>Food Scene?</h2>
+  <p>226,188 reviews. 6,926 restaurants. All the insights you need.</p>
+  <div class="cta-btns">
+    <a href="http://localhost:8501" target="_blank" class="btn-white">🚀 Launch Dashboard</a>
+    <a href="https://github.com/shirodkaraditya2003/DinePulse-Bangalore-Sentiment-Dashboard" target="_blank" class="btn-outline-white">⭐ Star on GitHub</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">🍽️ Dine<span>Pulse</span></div>
+  <p>Built by <a href="https://github.com/shirodkaraditya2003" target="_blank" class="footer-link">@shirodkaraditya2003</a></p>
+  <p style="color:rgba(255,255,255,0.25); font-size:0.8rem;">Bangalore Sentiment Dashboard · 2026</p>
+</footer>
+
+<script>
+  /* ── Navbar scroll shadow ─────────────────────── */
+  const navbar = document.getElementById('navbar');
+  window.addEventListener('scroll', () => {
+    navbar.classList.toggle('scrolled', window.scrollY > 20);
+  });
+
+  /* ── Animated tagline typewriter ─────────────── */
+  const phrases = [
+    '226,188 real reviews',
+    'VADER NLP sentiment',
+    '90 Bangalore locations',
+    '6,926 restaurants',
+    'live interactive maps',
+  ];
+  let pi = 0, ci = 0, deleting = false;
+  const el = document.getElementById('tagline');
+
+  function typewrite() {
+    const phrase = phrases[pi];
+    if (!deleting) {
+      el.textContent = phrase.slice(0, ++ci);
+      if (ci === phrase.length) { deleting = true; setTimeout(typewrite, 1800); return; }
+    } else {
+      el.textContent = phrase.slice(0, --ci);
+      if (ci === 0) { deleting = false; pi = (pi + 1) % phrases.length; }
+    }
+    setTimeout(typewrite, deleting ? 40 : 70);
+  }
+  typewrite();
+
+  /* ── Scroll reveal ────────────────────────────── */
+  const revealEls = document.querySelectorAll('.reveal, .stat-item');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 60);
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  revealEls.forEach(el => observer.observe(el));
+
+  /* ── Counter animation ────────────────────────── */
+  function animateCounter(el, target, suffix, duration = 1600) {
+    let start = 0;
+    const step = target / (duration / 16);
+    const id = setInterval(() => {
+      start = Math.min(start + step, target);
+      el.textContent = Math.floor(start).toLocaleString() + suffix;
+      if (start >= target) clearInterval(id);
+    }, 16);
+  }
+
+  const statObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const el = e.target;
+        const count = +el.dataset.count;
+        const suffix = el.dataset.suffix || '';
+        const numEl = el.querySelector('.stat-number');
+        animateCounter(numEl, count, suffix);
+        statObserver.unobserve(el);
+      }
+    });
+  }, { threshold: 0.3 });
+  document.querySelectorAll('.stat-item').forEach(el => statObserver.observe(el));
+
+  /* ── Tab switcher ─────────────────────────────── */
+  function switchTab(idx) {
+    document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+    document.querySelectorAll('.tab-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
+  }
+</script>
+</body>
+</html>
