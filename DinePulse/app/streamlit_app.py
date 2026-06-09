@@ -46,11 +46,11 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ── Load Data ─────────────────────────────────────────────────────────────────
-BASE = r"D:\NTECH\data science\zomato-sentiment-project\zomato-real-dataset"
+BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'data'))
 
 @st.cache_data
 def load_reviews():
-    path = os.path.join(BASE, 'data', 'sentiment_reviews.csv')
+    path = os.path.join(BASE, 'sentiment_reviews.csv')
     if not os.path.exists(path):
         st.error(f"❌ File not found at: {path}")
         st.stop()
@@ -62,7 +62,7 @@ def load_reviews():
 
 @st.cache_data
 def load_scorecard():
-    path = os.path.join(BASE, 'data', 'restaurant_scorecard.csv')
+    path = os.path.join(BASE, 'restaurant_scorecard.csv')
     if not os.path.exists(path):
         return pd.DataFrame()
     return pd.read_csv(path)
@@ -215,26 +215,36 @@ if page == "🏠 Overview":
     )
     st.plotly_chart(fig3, use_container_width=True)
 
-    # Online order vs sentiment
+    # Online order vs sentiment — two pie charts side by side
     if 'online_order' in df.columns:
-        st.markdown("#### Online Order vs Sentiment")
-        online_sent = (
-            df.groupby(['online_order','vader_sentiment'])
-            .size().reset_index(name='count')
-        )
-        fig4 = px.bar(
-            online_sent, x='online_order', y='count',
-            color='vader_sentiment',
-            color_discrete_map=SENTIMENT_COLORS,
-            barmode='stack',
-            labels={'online_order':'Accepts Online Orders'}
-        )
-        fig4.update_layout(
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font_color='#f5f5f5'
-        )
-        st.plotly_chart(fig4, use_container_width=True)
+        st.markdown("#### 🛵 Online Order vs Sentiment")
+        pie_col1, pie_col2 = st.columns(2)
+
+        for col, label in zip([pie_col1, pie_col2], ['Yes', 'No']):
+            subset = df[df['online_order'] == label]['vader_sentiment'].value_counts().reset_index()
+            subset.columns = ['Sentiment', 'Count']
+            fig_pie = px.pie(
+                subset, values='Count', names='Sentiment',
+                color='Sentiment',
+                color_discrete_map=SENTIMENT_COLORS,
+                hole=0.45,
+                title=f"{'✅ Accepts' if label == 'Yes' else '❌ No'} Online Orders"
+            )
+            fig_pie.update_traces(
+                textposition='inside',
+                textinfo='percent+label',
+                hovertemplate='<b>%{label}</b><br>Count: %{value:,}<br>Share: %{percent}<extra></extra>'
+            )
+            fig_pie.update_layout(
+                paper_bgcolor='rgba(0,0,0,0)',
+                font_color='#f5f5f5',
+                title_font_color='#f5f5f5',
+                showlegend=True,
+                legend=dict(orientation='h', yanchor='bottom', y=-0.2, xanchor='center', x=0.5),
+                margin=dict(t=50, b=40, l=10, r=10),
+                height=340
+            )
+            col.plotly_chart(fig_pie, use_container_width=True)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
