@@ -2,7 +2,7 @@
 
 > **Real-time sentiment intelligence for 6,926 Bangalore restaurants across 90 locations — powered by 226,188 Zomato reviews.**
 
-![Overview](assets/Screenshot%202026-06-09%20204626.png)
+![Overview](assets/Screenshot%202026-06-09%20210925.png)
 
 ---
 
@@ -11,48 +11,42 @@
 ### 🏠 Overview — KPIs & Sentiment Split
 Get a bird's-eye view of sentiment across all Bangalore restaurants — overall pie chart, top cuisines by reviews, sentiment by cuisine type, and online order analysis.
 
-![Overview Charts](assets/Screenshot%202026-06-09%20204651.png)
+![Overview Charts](assets/Screenshot%202026-06-09%20210925.png)
 
 ---
 
 ### 🔍 Instant Review Analyzer
 Paste any restaurant review and get real-time sentiment analysis with a confidence score and visual gauge.
 
-![Review Analyzer](assets/Screenshot%202026-06-09%20204708.png)
+![Review Analyzer](assets/Screenshot%202026-06-09%20210933.png)
 
 ---
 
 ### 📊 Restaurant Deep Dive
 Select any restaurant to see its full sentiment breakdown, rating distribution, positive/negative word clouds, and sample reviews.
 
-![Restaurant Deep Dive](assets/Screenshot%202026-06-09%20204740.png)
-
-![Word Clouds](assets/Screenshot%202026-06-09%20204746.png)
+![Restaurant Deep Dive](assets/Screenshot%202026-06-09%20210957.png)
 
 ---
 
 ### 📍 Location Analysis
 Discover which Bangalore neighbourhoods have the happiest diners — ranked bar charts for top & bottom areas with a volume vs. sentiment scatter plot.
 
-![Location Analysis](assets/Screenshot%202026-06-09%20204815.png)
-
-![Location Scatter](assets/Screenshot%202026-06-09%20204828.png)
+![Location Analysis](assets/Screenshot%202026-06-09%20211002.png)
 
 ---
 
 ### 🗺️ Map Explorer
 Interactive 3D Pydeck map of all restaurant locations across Bangalore, colour-coded by sentiment (🟢 Positive / 🟠 Mixed / 🔴 Negative), with click-to-inspect details.
 
-![Map Explorer](assets/Screenshot%202026-06-09%20204845.png)
-
-![Map Detail](assets/Screenshot%202026-06-09%20204904.png)
+![Map Explorer](assets/Screenshot%202026-06-09%20211019.png)
 
 ---
 
 ### 🏆 Leaderboard
 Restaurant health scorecard ranked by sentiment score — filterable by location and minimum review count, with downloadable CSV export.
 
-![Leaderboard](assets/Screenshot%202026-06-09%20204913.png)
+![Leaderboard](assets/Screenshot%202026-06-09%20211025.png)
 
 ---
 
