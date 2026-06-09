@@ -32,15 +32,154 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    [data-testid="stAppViewContainer"] { background-color: #111111; }
-    [data-testid="stSidebar"] { background-color: #1a1a1a; }
-    h1,h2,h3 { color: #e23744 !important; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+    /* ── Main background: deep violet gradient ── */
+    [data-testid="stAppViewContainer"] {
+        background: linear-gradient(135deg, #0d0d1a 0%, #12082a 40%, #1a0a2e 70%, #0f0f23 100%);
+        background-attachment: fixed;
+    }
+
+    /* Subtle animated glow overlay */
+    [data-testid="stAppViewContainer"]::before {
+        content: '';
+        position: fixed;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background:
+            radial-gradient(ellipse 60% 50% at 20% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 60%),
+            radial-gradient(ellipse 50% 40% at 80% 80%, rgba(226, 55, 68, 0.06) 0%, transparent 60%),
+            radial-gradient(ellipse 40% 40% at 60% 30%, rgba(99, 60, 180, 0.05) 0%, transparent 50%);
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    /* ── Sidebar: rich violet ── */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #1a0a3e 0%, #120826 60%, #0d0d1a 100%) !important;
+        border-right: 1px solid rgba(139, 92, 246, 0.2);
+    }
+    [data-testid="stSidebar"] * { color: #e2d9f3 !important; }
+    [data-testid="stSidebar"] .stRadio label { 
+        color: #c4b5fd !important;
+        font-weight: 500;
+    }
+    [data-testid="stSidebar"] hr {
+        border-color: rgba(139, 92, 246, 0.3) !important;
+    }
+
+    /* ── Headings ── */
+    h1 { 
+        background: linear-gradient(135deg, #e23744 0%, #c084fc 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: 800 !important;
+    }
+    h2, h3 { color: #c084fc !important; }
+    h4 { color: #a78bfa !important; }
+
+    /* ── Metric cards ── */
+    [data-testid="metric-container"] {
+        background: rgba(139, 92, 246, 0.1);
+        border: 1px solid rgba(139, 92, 246, 0.25);
+        border-radius: 14px;
+        padding: 16px;
+        backdrop-filter: blur(8px);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    [data-testid="metric-container"]:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 32px rgba(139, 92, 246, 0.2);
+        border-color: rgba(139, 92, 246, 0.5);
+    }
+    [data-testid="metric-container"] [data-testid="stMetricValue"] {
+        color: #f3f0ff !important;
+        font-size: 1.6rem !important;
+        font-weight: 700 !important;
+    }
+    [data-testid="metric-container"] [data-testid="stMetricLabel"] {
+        color: #a78bfa !important;
+        font-weight: 600 !important;
+    }
+
+    /* ── Buttons ── */
+    .stButton > button {
+        background: linear-gradient(135deg, #7c3aed, #a855f7) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 10px !important;
+        font-weight: 600 !important;
+        transition: all 0.2s !important;
+        box-shadow: 0 4px 15px rgba(124, 58, 237, 0.35) !important;
+    }
+    .stButton > button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 25px rgba(124, 58, 237, 0.5) !important;
+    }
+
+    /* ── Selectbox & inputs ── */
+    [data-baseweb="select"] > div {
+        background: rgba(30, 20, 60, 0.8) !important;
+        border: 1px solid rgba(139, 92, 246, 0.3) !important;
+        border-radius: 10px !important;
+        color: #e2d9f3 !important;
+    }
+    .stTextArea textarea {
+        background: rgba(30, 20, 60, 0.8) !important;
+        border: 1px solid rgba(139, 92, 246, 0.3) !important;
+        border-radius: 10px !important;
+        color: #e2d9f3 !important;
+    }
+
+    /* ── Tabs ── */
+    .stTabs [data-baseweb="tab-list"] {
+        background: rgba(139, 92, 246, 0.08) !important;
+        border-radius: 12px !important;
+        padding: 4px !important;
+    }
+    .stTabs [data-baseweb="tab"] {
+        color: #a78bfa !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+    }
+    .stTabs [aria-selected="true"] {
+        background: rgba(139, 92, 246, 0.3) !important;
+        color: #f3f0ff !important;
+    }
+
+    /* ── Dataframe ── */
+    [data-testid="stDataFrame"] {
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    /* ── Download button ── */
+    [data-testid="stDownloadButton"] button {
+        background: rgba(139, 92, 246, 0.15) !important;
+        border: 1px solid rgba(139, 92, 246, 0.4) !important;
+        color: #c084fc !important;
+        border-radius: 10px !important;
+        font-weight: 600 !important;
+    }
+
+    /* ── Divider ── */
+    hr { border-color: rgba(139, 92, 246, 0.2) !important; }
+
+    /* ── General text ── */
+    p, li, span, label { color: #d4c8f0; }
+    .stMarkdown { color: #d4c8f0; }
+
     .metric-box {
-        background: #1e1e1e;
-        border: 1px solid #333;
-        border-radius: 10px;
+        background: rgba(139, 92, 246, 0.1);
+        border: 1px solid rgba(139, 92, 246, 0.25);
+        border-radius: 14px;
         padding: 16px;
         text-align: center;
+        backdrop-filter: blur(8px);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -272,10 +411,11 @@ elif page == "🔍 Analyze Review":
                     sentiment, icon, color = 'Neutral', '😐', '#f39c12'
 
                 st.markdown(f"""
-                <div style='background:#1e1e1e;border-left:5px solid {color};
-                            border-radius:10px;padding:20px;margin:15px 0'>
-                    <h2 style='color:{color};margin:0'>{icon} {sentiment}</h2>
-                    <p style='color:#aaa;margin:8px 0 0'>
+                <div style='background:rgba(139,92,246,0.08);border-left:5px solid {color};
+                            border-radius:14px;padding:20px;margin:15px 0;
+                            border:1px solid rgba(139,92,246,0.2);backdrop-filter:blur(8px)'>
+                    <h2 style='color:{color};margin:0;-webkit-text-fill-color:{color}'>{icon} {sentiment}</h2>
+                    <p style='color:#c4b5fd;margin:8px 0 0'>
                         Sentiment Score: <b style='color:{color}'>{score:+.3f}</b>
                         &nbsp;|&nbsp; Confidence: <b style='color:{color}'>{abs(score)*100:.1f}%</b>
                     </p>
@@ -291,9 +431,9 @@ elif page == "🔍 Analyze Review":
                         'axis': {'range':[-1,1], 'tickcolor':'#aaa'},
                         'bar':  {'color': color},
                         'steps':[
-                            {'range':[-1,-0.05],'color':'#2d1117'},
-                            {'range':[-0.05,0.05],'color':'#1e1e1e'},
-                            {'range':[0.05,1],'color':'#112d1a'},
+                            {'range':[-1,-0.05],'color':'rgba(231,76,60,0.15)'},
+                            {'range':[-0.05,0.05],'color':'rgba(139,92,246,0.1)'},
+                            {'range':[0.05,1],'color':'rgba(46,204,113,0.15)'},
                         ]
                     },
                     title={'text':"Sentiment Score",'font':{'color':'#f5f5f5'}}
@@ -393,10 +533,10 @@ elif page == "📊 Restaurant Deep Dive":
         text = ' '.join(text_series.dropna())
         if len(text.strip()) < 20:
             return None
-        wc = WordCloud(width=700,height=320,background_color='#111111',
+        wc = WordCloud(width=700,height=320,background_color='#12082a',
                        colormap=cmap, max_words=60).generate(text)
         fig, ax = plt.subplots(figsize=(7,3))
-        fig.patch.set_facecolor('#111111')
+        fig.patch.set_facecolor('#12082a')
         ax.imshow(wc, interpolation='bilinear')
         ax.axis('off')
         return fig
