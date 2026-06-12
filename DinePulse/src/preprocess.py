@@ -8,6 +8,8 @@ import pandas as pd
 import re
 import ast
 import nltk
+import sys
+import os
 from nltk.corpus import stopwords
 
 nltk.download('stopwords', quiet=True)
@@ -123,10 +125,23 @@ def load_and_clean(filepath: str) -> pd.DataFrame:
 
 
 if __name__ == '__main__':
-    reviews_df, raw_df = load_and_clean('data/zomato.csv')
-    reviews_df.to_csv('data/cleaned_reviews.csv', index=False)
-    raw_df.to_csv('data/cleaned_restaurants.csv', index=False)
-    print("Saved → data/cleaned_reviews.csv")
-    print("Saved → data/cleaned_restaurants.csv")
+    # Fix for Windows console emoji encoding issues
+    if sys.stdout.encoding.lower() != 'utf-8':
+        sys.stdout.reconfigure(encoding='utf-8')
+
+    # Resolve paths relative to this script
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.abspath(os.path.join(current_dir, '..', '..'))
+    data_dir = os.path.join(project_root, 'data')
+    
+    input_file = os.path.join(data_dir, 'zomato.csv')
+    reviews_out = os.path.join(data_dir, 'cleaned_reviews.csv')
+    restaurants_out = os.path.join(data_dir, 'cleaned_restaurants.csv')
+
+    reviews_df, raw_df = load_and_clean(input_file)
+    reviews_df.to_csv(reviews_out, index=False)
+    raw_df.to_csv(restaurants_out, index=False)
+    print(f"Saved → {reviews_out}")
+    print(f"Saved → {restaurants_out}")
     print("\n📊 Sample:")
     print(reviews_df[['restaurant_name', 'location', 'review_text']].head(3))

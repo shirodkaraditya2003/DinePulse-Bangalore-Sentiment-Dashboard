@@ -22,6 +22,24 @@ from bangalore_coords import BANGALORE_COORDS
 
 nltk.download('vader_lexicon', quiet=True)
 
+def clean_cost(cost_str) -> float:
+    try:
+        return float(str(cost_str).replace(',', '').strip())
+    except Exception:
+        return float('nan')
+
+def budget_segment(cost):
+    if pd.isna(cost):
+        return "Unknown"
+    elif cost < 500:
+        return "Budget"
+    elif cost < 1000:
+        return "Mid-range"
+    elif cost < 2000:
+        return "Premium"
+    else:
+        return "Luxury"
+
 # ── Page Config ───────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="DinePulse Sentiment Analyzer",
@@ -209,13 +227,38 @@ def load_scorecard():
 @st.cache_data
 def build_map_data(review_df):
     """Build a DataFrame of restaurants with coordinates for map display."""
+    def clean_cost(cost_str) -> float:
+        try:
+            return float(str(cost_str).replace(',', '').strip())
+        except Exception:
+            return float('nan')
+
+    def budget_segment(cost):
+        if pd.isna(cost):
+            return "Unknown"
+        elif cost < 500:
+            return "Budget"
+        elif cost < 1000:
+            return "Mid-range"
+        elif cost < 2000:
+            return "Premium"
+        else:
+            return "Luxury"
+
+    review_df = review_df.copy()
+    review_df['cost_clean'] = review_df['cost'].apply(clean_cost)
+
     rest_stats = review_df.groupby(['restaurant_name', 'location']).agg(
         total_reviews  = ('vader_sentiment', 'count'),
         positive_pct   = ('vader_sentiment', lambda x: round((x == 'Positive').mean() * 100, 1)),
         negative_pct   = ('vader_sentiment', lambda x: round((x == 'Negative').mean() * 100, 1)),
         neutral_pct    = ('vader_sentiment', lambda x: round((x == 'Neutral').mean() * 100, 1)),
         avg_score      = ('vader_score', 'mean'),
+        cost           = ('cost_clean', lambda x: x.dropna().iloc[0] if not x.dropna().empty else float('nan')),
     ).reset_index()
+
+    rest_stats['budget_segment'] = rest_stats['cost'].apply(budget_segment)
+    rest_stats['cost_str'] = rest_stats['cost'].apply(lambda c: f"₹{int(c)}" if not pd.isna(c) else 'Unknown')
 
     # Add coordinates with slight jitter so restaurants in the same area don't overlap
     coords = []
@@ -489,12 +532,21 @@ elif page == "📊 Restaurant Deep Dive":
     avg_s = rest_df['vader_score'].mean()
     health = (pos_p*1.0 + (100-pos_p-neg_p)*0.5)/100
 
-    c1,c2,c3,c4,c5 = st.columns(5)
+    c1,c2,c3,c4,c5,c6 = st.columns(6)
     c1.metric("📝 Reviews",       len(rest_df))
     c2.metric("✅ Positive",      f"{pos_p:.1f}%")
     c3.metric("❌ Negative",      f"{neg_p:.1f}%")
     c4.metric("😐 Neutral",       f"{neu_p:.1f}%")
     c5.metric("💯 Health Score",  f"{health*100:.1f}/100")
+    
+    # Extract cost details
+    cost_raw = rest_df['cost'].dropna().iloc[0] if 'cost' in rest_df.columns and not rest_df['cost'].dropna().empty else float('nan')
+    cost_clean = clean_cost(cost_raw)
+    seg = budget_segment(cost_clean)
+    if not pd.isna(cost_clean):
+        c6.metric("💰 Cost (2 people)", f"₹{int(cost_clean)}", help=f"Budget Segment: {seg}")
+    else:
+        c6.metric("💰 Cost (2 people)", "Unknown")
 
     col1, col2 = st.columns(2)
 
@@ -663,16 +715,36 @@ elif page == "🏆 Leaderboard":
         st.stop()
 
     # Filters
-    col1, col2 = st.columns(2)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         loc_filter = st.selectbox("Filter by Location",
             ['All'] + sorted(scorecard['location'].dropna().unique().tolist()))
     with col2:
         min_reviews = st.slider("Minimum Reviews", 1, 50, 5)
+    with col3:
+        budget_filter = st.multiselect(
+            "Filter by Budget", 
+            ['Budget', 'Mid-range', 'Premium', 'Luxury', 'Unknown'], 
+            default=['Budget', 'Mid-range', 'Premium', 'Luxury', 'Unknown']
+        )
+    with col4:
+        max_cost_val = int(scorecard['approx_cost'].dropna().max()) if 'approx_cost' in scorecard.columns and not scorecard['approx_cost'].dropna().empty else 3000
+        max_budget = st.slider("Max Budget (2 people)", 100, max_cost_val, max_cost_val, step=100)
 
     filtered_sc = scorecard[scorecard['total_reviews'] >= min_reviews]
     if loc_filter != 'All':
         filtered_sc = filtered_sc[filtered_sc['location'] == loc_filter]
+
+    # Filter by budget segment
+    if 'budget_segment' in filtered_sc.columns:
+        filtered_sc = filtered_sc[filtered_sc['budget_segment'].isin(budget_filter)]
+
+    # Filter by max budget
+    if 'approx_cost' in filtered_sc.columns:
+        filtered_sc = filtered_sc[
+            (filtered_sc['approx_cost'] <= max_budget) | 
+            (filtered_sc['approx_cost'].isna())
+        ]
 
     filtered_sc = filtered_sc.sort_values('health_score', ascending=False).reset_index(drop=True)
     filtered_sc['rank'] = range(1, len(filtered_sc)+1)
@@ -700,9 +772,16 @@ elif page == "🏆 Leaderboard":
 
     # Full table
     st.markdown("#### Full Scorecard")
+    display_sc = filtered_sc.copy()
+    if 'approx_cost' in display_sc.columns:
+        display_sc['approx_cost_display'] = display_sc['approx_cost'].apply(lambda x: f"₹{int(x)}" if not pd.isna(x) else 'Unknown')
+    else:
+        display_sc['approx_cost_display'] = 'Unknown'
+        display_sc['budget_segment'] = 'Unknown'
+
     st.dataframe(
-        filtered_sc[['rank','restaurant_name','location','health_score',
-                     'total_reviews','positive_pct','negative_pct','neutral_pct','grade','top_complaints']],
+        display_sc[['rank','restaurant_name','location','health_score','approx_cost_display','budget_segment',
+                     'total_reviews','positive_pct','negative_pct','neutral_pct','grade','top_complaints']].rename(columns={'approx_cost_display': 'approx_cost'}),
         use_container_width=True,
         hide_index=True
     )
@@ -819,7 +898,7 @@ elif page == "🗺️ Map Explorer":
                 <span style='color:#2ecc71'>✅ {positive_pct}%</span> &nbsp;
                 <span style='color:#e74c3c'>❌ {negative_pct}%</span> &nbsp;
                 <span style='color:#f39c12'>😐 {neutral_pct}%</span><br/>
-                <span>📝 {total_reviews} reviews</span>
+                <span>📝 {total_reviews} reviews</span> &nbsp;|&nbsp; <span>💰 Cost: {cost_str}</span>
             </div>
             """,
             "style": {"backgroundColor": "#1e1e1e", "color": "#f5f5f5"}
